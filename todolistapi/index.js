@@ -23,10 +23,9 @@ app.get("/", (req, res) => {
 });
 
 app.put("/:id", (req, res) => {
-  const { id, description, done } = req.body;
+  const { id } = req.body;
   targetIndex = toDoList.findIndex((element) => element.id == id);
-  toDoList[targetIndex].description = description;
-  toDoList[targetIndex].done = done;
+  toDoList[targetIndex] = req.body;
   res.send(toDoList.find((element) => element.id == id));
 });
 
