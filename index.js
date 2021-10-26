@@ -1,41 +1,69 @@
+const { randomUUID } = require("crypto");
 const express = require("express");
 const app = express();
 const toDoList = [];
+const cors = (req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Methods", "*");
+  next();
+};
 
 app.use(express.json());
+app.use(cors);
 
-app.post("/", (req, res) => {
-  toDoList.push(req.body);
-  res.status(201).send("The task successfully added");
+app.post("/tasks", (req, res) => {
+  const task = {
+    ...req.body,
+    id: randomUUID(),
+  };
+  toDoList.push(task);
+  res.status(201).json(task);
 });
 
-app.get("/", (req, res) => {
-  res.status(200).send(toDoList);
+app.get("/tasks", (req, res) => {
+  const { description } = req.query;
+  if (description) {
+    const filteredTasks = toDoList.filter((i) =>
+      i.description.includes(description)
+    );
+    return res.json(filteredTasks);
+  }
+  res.status(200).json(toDoList);
 });
 
-app.get("/:id", (req, res) => {
+app.get("/tasks/:id", (req, res) => {
   const { id } = req.params;
-  const target = toDoList.find((element) => element.id == id);
+  const target = toDoList.find((element) => element.id === id);
   target
     ? res.status(200).send(target)
     : res.status(404).send("Task not found");
 });
 
-app.put("/:id", (req, res) => {
+app.put("/tasks/:id", (req, res) => {
   const { id } = req.params;
-  const targetIndex = toDoList.findIndex((element) => element.id == id);
+  const { description, done } = req.body;
+  const target = toDoList.find((element) => element.id === id);
 
-  if (targetIndex >= 0) {
-    toDoList[targetIndex] = req.body;
-    return res.status(200).send("The task successfully updated");
-  } else {
-    return res.status(404).send("Task not found");
+  if (!target) {
+    return res.status(404).json({ error: "target not found" });
   }
+
+  if (done !== undefined) {
+    // "123"  !"123" = false !!"123" = true
+    target.done = !!done;
+  }
+
+  if (description) {
+    target.description = "" + target.description;
+  }
+
+  return res.json(target);
 });
 
-app.delete("/:id", (req, res) => {
+app.delete("/tasks/:id", (req, res) => {
   const { id } = req.params;
-  const targetIndex = toDoList.findIndex((element) => element.id == id);
+  const targetIndex = toDoList.findIndex((element) => element.id === id);
 
   if (targetIndex >= 0) {
     toDoList.splice(targetIndex, 1);
@@ -45,4 +73,4 @@ app.delete("/:id", (req, res) => {
   }
 });
 
-app.listen(8888, () => console.log(`listening on 8888`));
+app.listen(3000, () => console.log(`listening on 3000`));
